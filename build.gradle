@@ -1,74 +1,93 @@
 buildscript {
-	// Executed in context of buildscript
-	repositories {
-		// mavenLocal()
-		// maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
-		mavenCentral()
-		jcenter()
-		maven { url "https://plugins.gradle.org/m2/" }
-	}
-
-	dependencies {
-		classpath "org.anarres.gradle:gradle-stdproject-plugin:1.0.9"
-	}
+    dependencies {
+        classpath "org.anarres.gradle:gradle-stdproject-plugin:1.0.9"
+    }
 }
+
+plugins {
+    id 'com.github.spotbugs' version '4.7.1' apply false
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'eclipse'
+}
+
+apply plugin: 'org.anarres.stdmodule'
 
 group = "org.anarres.gradle"
 
-// apply from: file('gradle/convention.gradle')
-// apply from: file('gradle/github.gradle')
-// apply from: file('gradle/nexus.gradle')
-// apply from: file('gradle/check.gradle')
-// apply from: file('gradle/license.gradle')
-
-apply plugin: 'org.anarres.stdmodule'
-apply plugin: 'java-gradle-plugin'
-
 stdmodule {
-	description "An opinionated Gradle plugin for building Java projects."
-	author id: 'shevek', name: 'Shevek', email: 'github@anarres.org'
-	license 'Apache-2.0'
+    description "An opinionated Gradle plugin for building Java projects."
+    author id: 'shevek', name: 'Shevek', email: 'github@anarres.org'
+    license 'Apache-2.0'
 }
 
-repositories {
-	maven { url "https://plugins.gradle.org/m2/" }
-}
+apply from: "$projectDir/gradle/spotbugs.gradle"
 
 dependencies {
-	implementation gradleApi()
-	implementation localGroovy()
+    spotbugsPlugins 'com.mebigfatguy.sb-contrib:sb-contrib:7.4.7'
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.11.0'
 
-	implementation 'org.anarres.jdiagnostics:jdiagnostics:1.0.5'
-	implementation 'com.google.guava:guava:27.1-jre'
+    implementation gradleApi()
+    implementation localGroovy()
 
-	compile "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
-	compile 'org.ajoberstar:gradle-git-publish:2.1.1'
-	compile('com.netflix.nebula:gradle-info-plugin:5.0.3') {
-		exclude group: 'com.perforce'
-	}
-	compile 'com.bmuschko:gradle-nexus-plugin:2.3.1'
-	// implementation 'ru.vyarus:gradle-animalsniffer-plugin:1.5.0'
-	compile 'com.github.ben-manes:gradle-versions-plugin:0.22.0'
+    implementation 'org.anarres.jdiagnostics:jdiagnostics:1.0.5'
+    implementation 'com.google.guava:guava:27.1-jre'
 
-	compile 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:2.0.0'
+    compile "nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0"
+    compile 'org.ajoberstar:gradle-git-publish:2.1.1'
+    compile('com.netflix.nebula:gradle-info-plugin:5.0.3') {
+        exclude group: 'com.perforce'
+    }
+    compile 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+    compile 'com.github.ben-manes:gradle-versions-plugin:0.22.0'
 
-	// implementation 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
+    compile 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:2.0.0'
 }
+
+sourceCompatibility = '1.7'
+targetCompatibility = '1.8'
 
 gradlePlugin {
-	plugins {
-		stdproject {
-			id = "org.anarres.stdproject"
-			implementationClass = "org.anarres.gradle.plugin.stdproject.StdProjectPlugin"
-		}
-		stdmodule {
-			id = "org.anarres.stdmodule"
-			implementationClass = "org.anarres.gradle.plugin.stdproject.StdModulePlugin"
-		}
-		stdplugin {
-			id = "org.anarres.stdplugin"
-			implementationClass = "org.anarres.gradle.plugin.stdproject.StdPluginPlugin"
-		}
-	}
+    plugins {
+        stdproject {
+            id = "org.anarres.stdproject"
+            implementationClass = "org.anarres.gradle.plugin.stdproject.StdProjectPlugin"
+        }
+        stdmodule {
+            id = "org.anarres.stdmodule"
+            implementationClass = "org.anarres.gradle.plugin.stdproject.StdModulePlugin"
+        }
+        stdplugin {
+            id = "org.anarres.stdplugin"
+            implementationClass = "org.anarres.gradle.plugin.stdproject.StdPluginPlugin"
+        }
+    }
 }
 
+eclipse {
+    project {
+        natures 'edu.umd.cs.findbugs.plugin.eclipse.findbugsNature'
+        buildCommand 'edu.umd.cs.findbugs.plugin.eclipse.findbugsBuilder'
+    }
+
+    classpath.downloadJavadoc = true
+    classpath.downloadSources = true
+}
+
+compileJava.sourceCompatibility = '1.7'
+compileJava.targetCompatibility = '1.8'
+
+task sourcesJarGsp(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJarGsp(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJarGsp
+    archives javadocJarGsp
+}

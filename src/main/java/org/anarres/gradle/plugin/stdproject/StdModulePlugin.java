@@ -1,15 +1,15 @@
 package org.anarres.gradle.plugin.stdproject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.bmuschko.gradle.nexus.NexusPlugin;
 import com.github.benmanes.gradle.versions.VersionsPlugin;
 import com.github.spotbugs.SpotBugsExtension;
 import com.github.spotbugs.SpotBugsPlugin;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import groovy.lang.Closure;
-import java.util.HashMap;
-import java.util.Map;
-import nebula.plugin.info.InfoPlugin;
+
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
@@ -28,6 +28,9 @@ import org.gradle.api.tasks.testing.logging.TestLoggingContainer;
 import org.gradle.util.ConfigureUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import groovy.lang.Closure;
+import nebula.plugin.info.InfoPlugin;
 
 /**
  * The standard module plugin.
@@ -55,16 +58,15 @@ public class StdModulePlugin implements Plugin<Project> {
         JavaPluginConvention java = project.getConvention().getPlugin(JavaPluginConvention.class);
         java.setSourceCompatibility(JavaVersion.VERSION_1_7);
 
-        project.getRepositories().add(project.getRepositories().mavenCentral());
-        project.getRepositories().add(project.getRepositories().jcenter());
-
         project.getDependencies().add("testCompile", "junit:junit:4.12");
         project.getDependencies().add("testCompile", "org.slf4j:slf4j-api:1.7.12");
         project.getDependencies().add("testRuntime", "ch.qos.logback:logback-classic:1.1.3");
 
         // Javadoc javadoc = (Javadoc) project.getTasks().getByName(JavaPlugin.JAVADOC_TASK_NAME);
         for (Javadoc javadoc : project.getTasks().withType(Javadoc.class))
-            StdTaskConfiguration.configureJavadoc(project, javadoc);
+		{
+			StdTaskConfiguration.configureJavadoc(project, javadoc);
+		}
 
         Test test = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
         test.systemProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
@@ -77,12 +79,16 @@ public class StdModulePlugin implements Plugin<Project> {
         for (Map.Entry<Object, ? extends Object> e : System.getProperties().entrySet()) {
             String key = String.valueOf(e.getKey());
             if (key.startsWith(testSystemPropertyPrefix))
-                test.systemProperty(key.substring(testSystemPropertyPrefix.length()), e.getValue());
+			{
+				test.systemProperty(key.substring(testSystemPropertyPrefix.length()), e.getValue());
+			}
         }
         for (Map.Entry<String, ? extends Object> e : project.getExtensions().getExtraProperties().getProperties().entrySet()) {
             String key = e.getKey();
             if (key.startsWith(testSystemPropertyPrefix))
-                test.systemProperty(key.substring(testSystemPropertyPrefix.length()), e.getValue());
+			{
+				test.systemProperty(key.substring(testSystemPropertyPrefix.length()), e.getValue());
+			}
         }
 
         TestLoggingContainer testLogging = test.getTestLogging();
@@ -174,7 +180,9 @@ public class StdModulePlugin implements Plugin<Project> {
                                                     "email", Preconditions.checkNotNull(person.email, "Person.email was null.")
                                             ), target);
                                             if (LOG.isDebugEnabled())
-                                                LOG.debug("Developer value is {} with props {}", target, DefaultGroovyMethods.getProperties(target));
+											{
+												LOG.debug("Developer value is {} with props {}", target, DefaultGroovyMethods.getProperties(target));
+											}
                                         }
                                         return null;
                                     }
